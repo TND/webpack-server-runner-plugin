@@ -1,6 +1,6 @@
 {
   "name": "webpack-server-runner-plugin",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Development server runner for full stack Webpack development",
   "main": "index.js",
   "directories": {
@@ -18,5 +18,14 @@
   "bugs": {
     "url": "https://github.com/TND/webpack-server-runner-plugin/issues"
   },
-  "homepage": "https://github.com/TND/webpack-server-runner-plugin#readme"
+  "homepage": "https://github.com/TND/webpack-server-runner-plugin#readme",
+  "dependencies": {
+    "colors": "^1.1.2",
+    "express": "^4.14.0",
+    "morgan": "^1.7.0",
+    "webpack-hot-middleware": "^2.12.2"
+  },
+  "peerDependencies": {
+    "webpack": "^1.13.1"
+  }
 }
