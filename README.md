@@ -4,7 +4,6 @@ Development server runner for full stack Webpack development
 
 - Run your server code *and* serve your client code on `webpack --watch`
 - Keep [hot module replacement](https://webpack.github.io/docs/hot-module-replacement.html) (HMR) connection between server and browser on both client update and server update
-- (TODO) Keep [Socket.io](https://github.com/socketio/socket.io) connection on both client and server update
 - Compatible with [Express](https://github.com/expressjs/express), [Koa](https://github.com/koajs/koa), [Connect](https://github.com/senchalabs/connect) and all other libraries that export a listener for `http.createServer()`
 - No HMR acceptance code needed in your server or client code
 
@@ -33,7 +32,7 @@ module.exports = app;
 ```js
 const WebpackServerRunnerPlugin = require('webpack-server-runner-plugin');
 
-const runServer = new WebpackServerRunnerPlugin({
+const serverRunner = new WebpackServerRunnerPlugin({
     port: 3000 // default
 });
 
@@ -53,7 +52,7 @@ const server = {
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
         new webpack.NoErrorsPlugin(),
-        runServer
+        serverRunner
     ]
 };
 
@@ -72,7 +71,7 @@ const client = {
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
         new webpack.NoErrorsPlugin(),
-        new runServer.StaticFilesPlugin()
+        new serverRunner.StaticFilesPlugin()
     ]
 };
 
