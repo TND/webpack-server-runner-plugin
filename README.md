@@ -27,35 +27,87 @@ module.exports = app;
 
 ### In `webpack.config.js`
 
-`WebpackServerRunnerPlugin` needs at least the following properties in the Webpack config file. You should use a [multiple configuration setup](https://webpack.github.io/docs/configuration.html#multiple-configurations) for your server and client code:
+This section describes how to update your development Webpack config to be
+compatible with `ServerRunnerPlugin`. You should use a [multiple configuration setup](https://webpack.github.io/docs/configuration.html#multiple-configurations) for your server and client code:
 
 ```js
-const WebpackServerRunnerPlugin = require('webpack-server-runner-plugin');
+// in webpack.config.js
+const server = { /* server webpack config object */ };
+const client = { /* client webpack config object */ };
+module.exports = [server, client];
+```
 
-const serverRunner = new WebpackServerRunnerPlugin({
+You can add more named clients.
+
+Follow these steps to make your webpack config compatible with `ServerRunnerPlugin`:
+
+For the server config, external `node_modules` should be excluded from the build. You could e.g. use (`webpack-node-externals`)[https://github.com/liady/webpack-node-externals] for this. Import both libraries:
+
+```js
+const path = require('path');
+const nodeExternals = require('node-externals');
+const ServerRunnerPlugin = require('webpack-server-runner-plugin');
+```
+
+Initialize `ServerRunnerPlugin` with optional port:
+
+```js
+const serverRunner = new ServerRunnerPlugin({
     port: 3000 // default
 });
+```
 
+Configuration objects can have a `name` for better debug output. The server
+config must have `target: 'node'`, which makes the Webpack output compatible
+with Node.js. A `context` is also required.
+
+```js
 const server = {
     name: 'server',
+    target: 'node',
+    context: __dirname,
+```
+
+`server.entry` must be an array containing a Webpack hot client and your server
+entry file:
+
+```js
     entry: [
         'webpack/hot/poll?1000',
         './server'
     ],
-    context: __dirname,
-    target: 'node',
+```
+
+Use your favorite setup to make sure external `node_modules` are not included in the build, e.g.:
+
+```js
+    externals: nodeExternals(),
+```
+
+Output `libraryTarget` must be set and can be either `'commonjs2'` or `'commonjs'`:
+
+```js
     output: {
         path: path.join(__dirname, 'dist/server'),
         filename: 'index.js',
-        libraryTarget: 'commonjs2' // or 'commonjs'
+        libraryTarget: 'commonjs2'
     },
+```
+
+Apart from our newly created `serverRunner`, we also have to include the HMR plugin and `NoErrorsPlugin` to not interrupt the HMR with broken builds:
+
+```js
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
         new webpack.NoErrorsPlugin(),
         serverRunner
     ]
 };
+```
 
+Our client configuration object should include `webpack-hot-middleware` with `dynamicPublicPath` for each (named or unnamed) entry:
+
+``js
 const client = {
     name: 'client',
     entry: [
@@ -63,11 +115,20 @@ const client = {
         './client'
     ],
     context: __dirname,
+```
+
+`ServerRunnerPlugin` will serve the contents of `output.path` on the path component of `publicPath`. (You cannot use '/' because then it will override your server routes.)
+
+```js
     output: {
         path: path.join(__dirname, 'dist/client'),
-        new webpack.NoErrorsPlugin()
         publicPath: '/static/'
     },
+```
+
+Finally, include a `new serverRunner.StaticFilesPlugin()` and the necessary HMR modules:
+
+```js
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
         new webpack.NoErrorsPlugin(),
@@ -78,6 +139,9 @@ const client = {
 module.exports = [server, client];
 ```
 
+Please create an issue on Github if you had to take additional steps to make your setup working.
+
+
 ### Run
 
     webpack --watch
@@ -86,11 +150,11 @@ This plugin does not work with `webpack-dev-server`. `webpack-dev-server` only s
 
 ## How it works
 
-`WebpackServerRunnerPlugin` runs your server code via a `require()` statement to the output file. It modifies your entry module like [`DllPlugin`](https://github.com/webpack/docs/wiki/list-of-plugins#dllplugin) does: it exports the internal `require` function and the entry `module` object to be able to update the server after an HMR module reload of the main module.
+`ServerRunnerPlugin` runs your server code via a `require()` statement to the output file. It modifies your entry module like [`DllPlugin`](https://github.com/webpack/docs/wiki/list-of-plugins#dllplugin) does: it exports the internal `require` function and the entry `module` object to be able to update the server after an HMR module reload of the main module.
 
-You can optionally add more `module.hot.accept()` calls in your server code for other modules. If you don't, all HMR replacements will bubble up to your main module, which will then be accepted by `WebpackServerRunnerPlugin`.
+You can optionally add more `module.hot.accept()` calls in your server code for other modules. If you don't, all HMR replacements will bubble up to your main module, which will then be accepted by `ServerRunnerPlugin`.
 
-Internally, `WebpackServerRunnerPlugin` dispatches every incoming request between your client files and server routes based on the `output.publicPath` setting in your Webpack client config. The client files are served by an express app.
+Internally, `ServerRunnerPlugin` dispatches every incoming request between your client files and server routes based on the `output.publicPath` setting in your Webpack client config. The client files are served by an express app.
 
 You can even attach more `StaticFilesPlugin`s (with a different `output.publicPath`) if you have more than one client config.
 
