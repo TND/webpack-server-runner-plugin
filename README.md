@@ -107,7 +107,7 @@ Apart from our newly created `serverRunner`, we also have to include the HMR plu
 
 Our client configuration object should include `webpack-hot-middleware` with `dynamicPublicPath` for each (named or unnamed) entry:
 
-``js
+```js
 const client = {
     name: 'client',
     entry: [
