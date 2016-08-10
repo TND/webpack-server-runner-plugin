@@ -45,7 +45,7 @@ For the server config, external `node_modules` should be excluded from the build
 
 ```js
 const path = require('path');
-const nodeExternals = require('node-externals');
+const nodeExternals = require('webpack-node-externals');
 const ServerRunnerPlugin = require('webpack-server-runner-plugin');
 ```
 
@@ -68,8 +68,7 @@ const server = {
     context: __dirname,
 ```
 
-`server.entry` must be an array containing a Webpack hot client and your server
-entry file:
+`server.entry` must be an array containing a Webpack hot client and your server entry file:
 
 ```js
     entry: [
@@ -78,10 +77,12 @@ entry file:
     ],
 ```
 
-Use your favorite setup to make sure external `node_modules` are not included in the build, e.g.:
+Use your favorite setup to make sure external `node_modules` - except for the webpack hot client of your choice - are not included in the build, e.g.:
 
 ```js
-    externals: nodeExternals(),
+    externals: nodeExternals({
+        whitelist: ['webpack/hot/poll?1000']
+    }),
 ```
 
 Output `libraryTarget` must be set and can be either `'commonjs2'` or `'commonjs'`:
@@ -139,14 +140,51 @@ Finally, include a `new serverRunner.StaticFilesPlugin()` and the necessary HMR 
 module.exports = [server, client];
 ```
 
-Please create an issue on Github if you had to take additional steps to make your setup working.
+*Please create an [issue on Github](https://github.com/TND/webpack-server-runner-plugin/issues) if you had to take additional steps to make your setup working.*
 
 
 ### Run
 
+Now you can build, watch, run your server and serve your content with one command:
+
     webpack --watch
 
-This plugin does not work with `webpack-dev-server`. `webpack-dev-server` only serves client content.
+Please not that this plugin enhences the `webpack` command, not `webpack-dev-server`. `webpack-dev-server` only serves client content.
+
+
+### Tips for Node-targeted Webpack configuration
+
+These settings are not essential for `ServerRunnerPlugin`.
+
+In your `server` config, setting a [`devtool`](https://webpack.github.io/docs/configuration.html#devtool) is not enough to get correct source line numbers in stack traces. You can achieve this by using this plugin (just like this entire configuration, you should only use this for development):
+
+    npm install --save-dev source-map-support
+
+```js
+const server = {
+    ...,
+    plugins: [
+        ...,
+        new webpack.BannerPlugin(
+            'require("source-map-support").install();', {
+            raw: true,
+            entryOnly: false
+        })
+    ]
+};
+```
+
+You can use `__dirname` relative to your source files with this option:
+
+```js,
+const server = {
+    ...,
+    node: {
+        __dirname: true
+    }
+};
+```
+
 
 ## How it works
 
@@ -157,6 +195,7 @@ You can optionally add more `module.hot.accept()` calls in your server code for 
 Internally, `ServerRunnerPlugin` dispatches every incoming request between your client files and server routes based on the `output.publicPath` setting in your Webpack client config. The client files are served by an express app.
 
 You can even attach more `StaticFilesPlugin`s (with a different `output.publicPath`) if you have more than one client config.
+
 
 ## License
 
