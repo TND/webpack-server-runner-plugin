@@ -41,7 +41,7 @@ You can add more named clients.
 
 Follow these steps to make your webpack config compatible with `ServerRunnerPlugin`:
 
-For the server config, external `node_modules` should be excluded from the build. You could e.g. use (`webpack-node-externals`)[https://github.com/liady/webpack-node-externals] for this. Import both libraries:
+For the server config, external `node_modules` should be excluded from the build. You could e.g. use [`webpack-node-externals`](https://github.com/liady/webpack-node-externals) for this. Import both libraries:
 
 ```js
 const path = require('path');
@@ -95,7 +95,7 @@ Output `libraryTarget` must be set and can be either `'commonjs2'` or `'commonjs
     },
 ```
 
-Apart from our newly created `serverRunner`, we also have to include the HMR plugin and `NoErrorsPlugin` to not interrupt the HMR with broken builds:
+Apart from our newly created `serverRunner`, we also have to include the HMR plugin, and `NoErrorsPlugin` to not interrupt the HMR with broken builds:
 
 ```js
     plugins: [
@@ -118,7 +118,18 @@ const client = {
     context: __dirname,
 ```
 
-`ServerRunnerPlugin` will serve the contents of `output.path` on the path component of `publicPath`. (You cannot use '/' because then it will override your server routes.)
+For named entries, this will look like
+
+```js
+const hotMiddleware = 'webpack-hot-middleware/client?dynamicPublicPath=true';
+const client = {
+    entry: {
+        a: [hotMiddleware, './a'],
+        b: [hotMiddleware, './b']
+    },
+```
+
+`ServerRunnerPlugin` will serve the contents of `output.path` on the path component of `publicPath`. (You cannot use `'/'` because then it will override your server routes.)
 
 ```js
     output: {
@@ -140,21 +151,24 @@ Finally, include a `new serverRunner.StaticFilesPlugin()` and the necessary HMR 
 module.exports = [server, client];
 ```
 
-*Please create an [issue on Github](https://github.com/TND/webpack-server-runner-plugin/issues) if you had to take additional steps to make your setup working.*
+*Please file an [issue](https://github.com/TND/webpack-server-runner-plugin/issues) or create a pull request on GitHub if you had to take additional steps to make your setup working.*
 
 
 ### Run
 
-Now you can build, watch, run your server and serve your content with one command:
+Now you can build, watch, run your server and serve your client with one command:
 
     webpack --watch
 
-Please not that this plugin enhences the `webpack` command, not `webpack-dev-server`. `webpack-dev-server` only serves client content.
+Please note that this plugin enhences the `webpack` command, not `webpack-dev-server`. `webpack-dev-server` only serves client content.
 
 
 ### Tips for Node-targeted Webpack configuration
 
 These settings are not essential for `ServerRunnerPlugin`.
+
+
+#### Source maps
 
 In your `server` config, setting a [`devtool`](https://webpack.github.io/docs/configuration.html#devtool) is not enough to get correct source line numbers in stack traces. You can achieve this by using this plugin (just like this entire configuration, you should only use this for development):
 
@@ -174,7 +188,10 @@ const server = {
 };
 ```
 
-You can use `__dirname` relative to your source files with this option:
+
+#### Using `__dirname` in source files
+
+In your server code, you can use `__dirname` relative to a source file with this option:
 
 ```js,
 const server = {
@@ -183,6 +200,27 @@ const server = {
         __dirname: true
     }
 };
+```
+
+
+#### Webpack configurations for multiple environments
+
+There are multiple ways to combine the common parts of webpack configurations for different environments (e.g. development, test, acceptation and production). There are NPM packages that make inheritance of configuration objects more easy by providing features for combining arrays. However, you can easily define all configurations in one place without a library, using boolean variables for all environments and `[].filter(Boolean)` to remove all falsy values from the resulting arrays:
+
+```js
+    plugins: [
+        new webpack.DefinePlugin(globals),
+        new webpack.optimize.OccurenceOrderPlugin(),
+        (TEST || DEV) && new webpack.BannerPlugin(
+            'require("source-map-support").install();', {
+            raw: true,
+            entryOnly: false
+        }),
+        DEV && new webpack.HotModuleReplacementPlugin(),
+        DEV && new webpack.NoErrorsPlugin(),
+        DEV && serverRunner
+    ].filter(Boolean),
+    devtool: (TEST || DEV) ? 'source-map' : undefined
 ```
 
 
