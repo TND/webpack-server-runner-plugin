@@ -1,6 +1,6 @@
 {
   "name": "webpack-server-runner-plugin",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Development server runner for full stack Webpack development",
   "main": "index.js",
   "directories": {
