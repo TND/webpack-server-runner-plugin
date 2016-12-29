@@ -1,6 +1,6 @@
 # webpack-server-runner-plugin
 
-Development server runner for full stack Webpack development
+Development server runner for full stack Webpack 2 development
 
 - Run your server code *and* serve your client code on `webpack --watch`
 - Keep [hot module replacement](https://webpack.github.io/docs/hot-module-replacement.html) (HMR) connection between server and browser on both client update and server update
@@ -10,6 +10,8 @@ Development server runner for full stack Webpack development
 ## Install
 
     npm install --save-dev webpack-server-runner-plugin
+
+(Install `webpack-server-runner-plugin@^0.0.6` for Webpack 1 development.)
 
 ## Usage
 
@@ -184,7 +186,14 @@ const server = {
             raw: true,
             entryOnly: false
         })
-    ]
+    ],
+    // Enable source map support in your preprocessors too:
+    module: {
+        loaders: [
+            { ..., loaders: ['babel?retainLines=true', 'eslint'] },
+            ...
+        ]
+    },
 };
 ```
 
@@ -211,7 +220,7 @@ There are multiple ways to combine the common parts of webpack configurations fo
     plugins: [
         new webpack.DefinePlugin(globals),
         new webpack.optimize.OccurenceOrderPlugin(),
-        (TEST || DEV) && new webpack.BannerPlugin(
+        new webpack.BannerPlugin(
             'require("source-map-support").install();', {
             raw: true,
             entryOnly: false
@@ -220,7 +229,7 @@ There are multiple ways to combine the common parts of webpack configurations fo
         DEV && new webpack.NoErrorsPlugin(),
         DEV && serverRunner
     ].filter(Boolean),
-    devtool: (TEST || DEV) ? 'source-map' : undefined
+    devtool: DEV ? 'eval' : 'cheap-module-source-map'
 ```
 
 
