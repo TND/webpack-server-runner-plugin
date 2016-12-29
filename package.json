@@ -1,6 +1,6 @@
 {
   "name": "webpack-server-runner-plugin",
-  "version": "0.0.5",
+  "version": "2.0.0",
   "description": "Development server runner for full stack Webpack development",
   "main": "index.js",
   "directories": {
@@ -23,9 +23,9 @@
     "colors": "^1.1.2",
     "express": "^4.14.0",
     "morgan": "^1.7.0",
-    "webpack-hot-middleware": "^2.12.2"
+    "webpack-hot-middleware": "^2.13.2"
   },
   "peerDependencies": {
-    "webpack": "^1.13.1"
+    "webpack": "^2.2.0-rc.3"
   }
 }
