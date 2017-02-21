@@ -162,7 +162,7 @@ module.exports = [server, client];
 
 Now you can build, watch, run your server and serve your client with one command:
 
-    webpack --watch
+    webpack --watch --env.startserver
 
 Please note that this plugin enhences the `webpack` command, not `webpack-dev-server`. `webpack-dev-server` only serves client content.
 
