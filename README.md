@@ -55,7 +55,9 @@ Initialize `ServerRunnerPlugin` with optional port:
 
 ```js
 const serverRunner = new ServerRunnerPlugin({
-    port: 3000 // default
+    host: 'http://localhost', // default
+    port: 8080 // default,
+    open: false // open browser on start, default false
 });
 ```
 
